@@ -13,7 +13,7 @@ strDate = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 t = tidevice.Device()
 perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, tidevice.DataType.MEMORY,
-                                tidevice.DataType.NETWORK, tidevice.DataType.PAGE])
+                                tidevice.DataType.GPU, tidevice.DataType.PAGE])
 # perf = tidevice.Performance(t)
 # strDate = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 base_path = os.path.dirname(os.path.abspath(__file__))
@@ -84,7 +84,7 @@ memory_title_writer()
 # time.sleep(10)
 time.sleep(3600*8)
 perf.stop()
-packages = ["com.yueyou.cyreader"]
-package_save_path = time_file
-report = Report(package_save_path, packages)
-report.filter_file_names(package_save_path)
+# packages = ["com.yueyou.cyreader"]
+# package_save_path = time_file
+# report = Report(package_save_path, packages)
+# report.filter_file_names(package_save_path)

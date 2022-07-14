@@ -97,8 +97,10 @@ class WaitGroup(object):
 def gen_stimestamp(seconds: Optional[float] = None) -> str:
     """ 生成专门用于tmq-service.taobao.org平台使用的timestampString """
     if seconds is None:
-        seconds = time.time()
-    return int(seconds * 1000)
+        # seconds = time.time()
+        seconds = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    # return int(seconds * 1000)
+    return seconds
 
 
 def iter_fps(d: BaseDevice) -> Iterator[Any]:
@@ -106,7 +108,9 @@ def iter_fps(d: BaseDevice) -> Iterator[Any]:
         for data in ts.iter_opengl_data():
             fps = data['CoreAnimationFramesPerSecond'] # fps from GPU
             # print("FPS:", fps)
-            yield DataType.FPS, {"fps": fps, "time": time.time(), "value": fps}
+            # yield DataType.FPS, {"fps": fps, "time": time.time(), "value": fps}
+            yield DataType.FPS, {"timestamp": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
+                                 "fps": fps, "value": fps}
 
 
 def iter_gpu(d: BaseDevice) -> Iterator[Any]:
@@ -232,8 +236,8 @@ def iter_cpu_memory(d: BaseDevice, rp: RunningProcess) -> Iterator[Any]:
             "count": minfo['cpu_count']
         }
         yield DataType.MEMORY, {
-            "pid": minfo['pid'],
             "timestamp": gen_stimestamp(),
+            "pid": minfo['pid'],
             "value": minfo['phys_memory'] / 1024 / 1024,  # MB
         }
 
