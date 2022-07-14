@@ -1,21 +1,12 @@
 import time
 import tidevice
 import csv
-import os,sys
-import datetime
-
 import os
 from datetime import datetime
-
-from tools.excel import Excel
 from tools.report import Report
-strDate = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-t = tidevice.Device()
-perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, tidevice.DataType.MEMORY,
-                                tidevice.DataType.GPU, tidevice.DataType.PAGE])
-# perf = tidevice.Performance(t)
-# strDate = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
+strDate = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 base_path = os.path.dirname(os.path.abspath(__file__))
 time_file = os.path.join(base_path, 'results', 'com.yueyou.cyreader', strDate)
 os.makedirs(time_file)
@@ -77,14 +68,18 @@ def callback(_type: tidevice.DataType, value: dict):
             print(e)
 
 
+t = tidevice.Device()
+perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, tidevice.DataType.MEMORY,
+                                tidevice.DataType.GPU, tidevice.DataType.PAGE])
+
 perf.start("com.yueyou.cyreader", callback=callback)
 cpu_title_writer()
 fps_title_writer()
 memory_title_writer()
 # time.sleep(10)
-time.sleep(3600*8)
+time.sleep(3600*3)
 perf.stop()
-# packages = ["com.yueyou.cyreader"]
-# package_save_path = time_file
-# report = Report(package_save_path, packages)
-# report.filter_file_names(package_save_path)
+packages = ["com.yueyou.cyreader"]
+package_save_path = time_file
+report = Report(package_save_path, packages)
+report.filter_file_names(package_save_path)
