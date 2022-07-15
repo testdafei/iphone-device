@@ -116,8 +116,10 @@ class BaseDevice():
         else:
             if len(devices) == 0:
                 raise MuxError("No device connected")
-            elif len(devices) > 1:
-                raise MuxError("More then one device connected")
+            # elif len(devices) > 1:
+            #     raise MuxError("More then one device connected")
+            if not len(devices) == 1:
+                print('usb连接设备超过1个，选择连接', devices[0].udid)
             _d = devices[0]
             self._udid = _d.udid
             self._info = _d
