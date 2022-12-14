@@ -61,6 +61,6 @@ if __name__ == '__main__':
 # 根据csv生成excel汇总文件
 #     from mobileperf.android.globaldata import RuntimeData
     packages = ["com.yueyou.cyreader"]
-    package_save_path = "/Users/admin/PycharmProjects/taobao-iphone-device/results/com.yueyou.cyreader/2022_07_12_19_40_14"
+    package_save_path = "/Users/admin/PycharmProject/iphone-device/results/com.yueyou.cyreader/2022_08_12_09_54_04"
     report = Report(package_save_path,packages)
     report.filter_file_names(package_save_path)

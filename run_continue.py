@@ -11,7 +11,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 results_path = os.path.join(base_path, 'results', 'com.yueyou.cyreader')
 lists = os.listdir(results_path)         # 列出目录的下所有文件和文件夹保存到lists
-lists.sort(key=lambda fn: os.path.getmtime(results_path + "/" + fn)) # 按时间排序
+lists.sort(key=lambda fn: os.path.getmtime(results_path + "/" + fn))  # 按时间排序
 continue_path = os.path.join(results_path, lists[-1])      # 获取最新的文件保存到file_new
 # continue_path = os.path.join(base_path, 'results', 'com.yueyou.cyreader', '2022_07_14_15_15_34')
 print('当前文件夹下的最新文件夹为', continue_path)
@@ -88,7 +88,7 @@ perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, ti
 perf.start("com.yueyou.cyreader", callback=callback)
 
 # time.sleep(10)
-time.sleep(3600*4)
+time.sleep(3600*5.5)
 perf.stop()
 packages = ["com.yueyou.cyreader"]
 package_save_path = continue_path
