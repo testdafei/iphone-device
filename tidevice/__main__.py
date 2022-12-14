@@ -41,10 +41,6 @@ um: Usbmux = None  # Usbmux
 logger = logging.getLogger(PROGRAM_NAME)
 
 
-# ulogger.remove()
-# ulogger.add(sys.stderr, level="INFO")
-
-
 def _complete_udid(udid: Optional[str] = None) -> str:
     infos = um.device_list()
     # Find udid exactly match
@@ -90,7 +86,7 @@ def cmd_list(args: argparse.Namespace):
     ds = um.device_list()
     if args.usb:
         ds = [info for info in ds if info.conn_type == ConnectionType.USB]
-    
+
     if args.one:
         for info in ds:
             print(info.udid)
@@ -168,7 +164,7 @@ def cmd_install(args: argparse.Namespace):
     bundle_id = d.app_install(args.filepath_or_url)
 
     if args.launch:
-        with d.instruments_context() as ts:
+        with d.connect_instruments() as ts:
             pid = ts.app_launch(bundle_id)
             logger.info("Launch %r, process pid: %d", bundle_id, pid)
 
@@ -255,6 +251,7 @@ def cmd_xctest(args: argparse.Namespace):
     Run XCTest required WDA installed.
     """
     if args.debug:
+        ulogger.enable(PROGRAM_NAME)
         setup_logger(LOG.xctest, level=logging.DEBUG)
 
     d = _udid2device(args.udid)
@@ -342,7 +339,7 @@ def cmd_launch(args: argparse.Namespace):
         logger.info("App launch env: %s", env)
 
     try:
-        with d.instruments_context() as ts:
+        with d.connect_instruments() as ts:
             pid = ts.app_launch(args.bundle_id,
                                         app_env=env,
                                         args=args.arguments,
@@ -367,7 +364,7 @@ def cmd_kill(args: argparse.Namespace):
 
 def cmd_system_info(args):
     d = _udid2device(args.udid)
-    with d.instruments_context() as ts:
+    with d.connect_instruments() as ts:
         sinfo = ts.system_info()
         pprint(sinfo)
 
@@ -442,6 +439,9 @@ def cmd_developer(args: argparse.Namespace):
                 except requests.HTTPError:
                     break
         #     print("finish cache developer image {}".format(version))
+    elif args.list:
+        d = _udid2device(args.udid)
+        print(d.imagemounter.lookup())
     else:
         d = _udid2device(args.udid)
         d.mount_developer_image()
@@ -578,7 +578,8 @@ def cmd_fsync(args: argparse.Namespace):
 def cmd_ps(args: argparse.Namespace):
     d = _udid2device(args.udid)
     app_infos = list(d.installation.iter_installed(app_type=None))
-    ps = list(d.connect_instruments().app_process_list(app_infos))
+    with d.connect_instruments() as ts:
+        ps = list(ts.app_process_list(app_infos))
 
     lens = defaultdict(int)
     json_data = []
@@ -661,9 +662,7 @@ _commands = [
              dict(args=['--json'],
                   action='store_true',
                   help='output in json format'),
-             dict(args=['--usb'],
-                  action='store_true',
-                  help='usb USB device'),
+             dict(args=['--usb'], action='store_true', help='usb USB device'),
              dict(args=['-1'],
                   dest="one",
                   action='store_true',
@@ -712,7 +711,10 @@ _commands = [
     dict(action=cmd_applist,
          command="applist",
          flags=[
-             dict(args=['--type'], default='user', help='filter app with type', choices=['user', 'system', 'all'])
+             dict(args=['--type'],
+                  default='user',
+                  help='filter app with type',
+                  choices=['user', 'system', 'all'])
          ],
          help="list packages"),
     dict(action=cmd_battery,
@@ -761,10 +763,9 @@ _commands = [
                   help='kill app if running'),
              dict(args=["bundle_id"], help="app bundleId"),
              dict(args=['arguments'], nargs='*', help='app arguments'),
-             dict(
-                 args=['-e', '--env'],
-                 action='append',
-                 help="set env with format key:value, support multi -e"),
+             dict(args=['-e', '--env'],
+                  action='append',
+                  help="set env with format key:value, support multi -e"),
          ],
          help="launch app with bundle_id"),
     dict(action=cmd_energy,
@@ -862,16 +863,27 @@ _commands = [
     dict(action=cmd_crashreport,
          command="crashreport",
          flags=[
-             dict(args=['-l', '--list'], action='store_true', help='list all crash files'),
-             dict(args=['-k', '--keep'], action='store_true', help="copy but do not remove crash reports from device"),
-             dict(args=['-c', '--clear'], action='store_true', help='clear crash files'),
-             dict(args=['output_directory'], nargs="?", help='The output dir to save crash logs synced from device'),
+             dict(args=['-l', '--list'],
+                  action='store_true',
+                  help='list all crash files'),
+             dict(args=['-k', '--keep'],
+                  action='store_true',
+                  help="copy but do not remove crash reports from device"),
+             dict(args=['-c', '--clear'],
+                  action='store_true',
+                  help='clear crash files'),
+             dict(args=['output_directory'],
+                  nargs="?",
+                  help='The output dir to save crash logs synced from device'),
          ],
          help="crash log tools"),
     dict(action=cmd_dump_fps, command='dumpfps', help='dump fps'),
     dict(action=cmd_developer,
          command="developer",
          flags=[
+             dict(args=["-l", "--list"],
+                  action="store_true",
+                  help="list mount information"),
              dict(args=['--download-all'],
                   action="store_true",
                   help="download all developer to local")
@@ -912,6 +924,7 @@ def main():
     parser.add_argument("-v", "--version", action="store_true", help="show current version"),
     parser.add_argument("-u", "--udid", help="specify unique device identifier")
     parser.add_argument("--socket", help="usbmuxd listen address, host:port or local-path")
+    parser.add_argument("--trace", action="store_true", help="show trace info")
 
     subparser = parser.add_subparsers(dest='subparser')
     actions = {}
@@ -940,6 +953,9 @@ def main():
         # show_upgrade_message()
         return
 
+    if args.trace:
+        ulogger.enable(PROGRAM_NAME)
+        
     # log setup
     setup_logger(LOG.main,
         level=logging.DEBUG if os.getenv("DEBUG") in ("1", "on", "true") else logging.INFO)

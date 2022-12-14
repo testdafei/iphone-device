@@ -104,7 +104,7 @@ def gen_stimestamp(seconds: Optional[float] = None) -> str:
 
 
 def iter_fps(d: BaseDevice) -> Iterator[Any]:
-    with d.instruments_context() as ts:
+    with d.connect_instruments() as ts:
         for data in ts.iter_opengl_data():
             fps = data['CoreAnimationFramesPerSecond'] # fps from GPU
             # print("FPS:", fps)
@@ -114,7 +114,7 @@ def iter_fps(d: BaseDevice) -> Iterator[Any]:
 
 
 def iter_gpu(d: BaseDevice) -> Iterator[Any]:
-    with d.instruments_context() as ts:
+    with d.connect_instruments() as ts:
         for data in ts.iter_opengl_data():
             device_utilization = data['Device Utilization %']  # Device Utilization
             tiler_utilization = data['Tiler Utilization %'] # Tiler Utilization
@@ -154,7 +154,7 @@ def _iter_complex_cpu_memory(d: BaseDevice,
         'mem_rss': 130760704,
         'pid': 1344}
     """
-    with d.instruments_context() as ts:
+    with d.connect_instruments() as ts:
         for info in ts.iter_cpu_memory():
             pid = rp.get_pid()
 
@@ -253,7 +253,7 @@ def set_interval(it: Iterator[Any], interval: float):
 
 def iter_network_flow(d: BaseDevice, rp: RunningProcess) -> Iterator[Any]:
     n = 0
-    with d.instruments_context() as ts:
+    with d.connect_instruments() as ts:
         for nstat in ts.iter_network():
             # if n < 2:
             #     n += 1

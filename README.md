@@ -42,6 +42,13 @@ pip3 install -U tidevice
 
 ## 使用
 
+> 使用--trace选项可以查看socket数据流
+
+### 手机配置
+iOS 16的手机需要手工开启开发者选项。
+开启方法：设置->隐私与安全性->开发者模式 （打开），然后会提示重启 （点击 重新启动） -> 启动后会弹窗 是否打开“开发者模式”？（点击打开）
+
+
 ### 查看版本号
 ```bash
 $ tidevice version
@@ -371,6 +378,7 @@ Python code style(ZH): https://zh-google-styleguide.readthedocs.io/en/latest/goo
 ## Alternatives
 - <https://github.com/danielpaulus/go-ios>
 - Go implemented: <https://github.com/electricbubble/gidevice>
+- https://github.com/SonicCloudOrg/sonic-ios-bridge
 
 ## Thanks
 - C implementation <https://github.com/libimobiledevice>

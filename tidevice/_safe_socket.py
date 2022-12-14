@@ -20,18 +20,20 @@ from ._utils import set_socket_timeout
 from .exceptions import *
 
 from loguru import logger
-# logger = logging.getLogger(PROGRAM_NAME)
+
 
 _n = [0]
 _nlock = threading.Lock()
 _id_numbers = []
 
 def acquire_uid() -> int:
-    logger.info("Create new socket, total {}", len(_id_numbers) + 1)
+    _id = None
     with _nlock:
         _n[0] += 1
         _id_numbers.append(_n[0])
-        return _n[0]
+        _id = _n[0]
+    logger.info("Opening socket: id={}", _id)
+    return _id
 
 
 def release_uid(id: int):
@@ -39,7 +41,7 @@ def release_uid(id: int):
         _id_numbers.remove(id)
     except ValueError:
         pass
-    logger.info("Release socket, total: {}", len(_id_numbers))
+    logger.info("Closing socket, id={}", id)
     
 
 
@@ -76,9 +78,9 @@ class SafeStreamSocket:
     
     def _cleanup(self):
         release_uid(self.id)
-        self._sock.close()
         if self._dup_sock:
             self._dup_sock.close()
+        self._sock.close()
 
     def close(self):
         self._finalizer()
@@ -110,7 +112,7 @@ class SafeStreamSocket:
         while len(buf) < size:
             chunk = self._sock.recv(size - len(buf))
             if not chunk:
-                raise MuxError("socket connection broken")
+                raise ConnectionError("socket connection broken")
             buf.extend(chunk)
         return buf
 
@@ -125,7 +127,7 @@ class SafeStreamSocket:
 
     def switch_to_ssl(self, pemfile):
         """ wrap socket to SSLSocket """
-        # logger.debug("Switch to ssl")
+        logger.debug("Socket({}): switch to ssl", self.id)
         assert os.path.isfile(pemfile)
         
         # https://docs.python.org/zh-cn/3/library/ssl.html#ssl.SSLContext

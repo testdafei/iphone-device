@@ -12,9 +12,9 @@ import os
 import pathlib
 import re
 import shutil
+import socket
 import ssl
 import sys
-import socket
 import tempfile
 import threading
 import time
@@ -24,6 +24,7 @@ import zipfile
 from typing import Iterator, Optional, Union
 
 import requests
+from deprecation import deprecated
 from logzero import setup_logger
 from PIL import Image
 from retry import retry
@@ -673,7 +674,7 @@ class BaseDevice():
         """
         return pid killed
         """
-        with self.instruments_context() as ts:
+        with self.connect_instruments() as ts:
             if isinstance(pid_or_name, int):
                 ts.app_kill(pid_or_name)
                 return pid_or_name
@@ -694,13 +695,15 @@ class BaseDevice():
     def app_start(self,
                   bundle_id: str,
                   args: Optional[list] = [],
-                  kill_running: bool = False) -> int:
+                  kill_running: bool = True) -> int:
         """
         start application
         
         return pid
+
+        Note: kill_running better to True, if set to False, launch 60 times will trigger instruments service stop
         """
-        with self.instruments_context() as ts:
+        with self.connect_instruments() as ts:
             return ts.app_launch(bundle_id, args=args, kill_running=kill_running)
 
     def app_install(self, file_or_url: Union[str, typing.IO]) -> str:
@@ -788,6 +791,9 @@ class BaseDevice():
             conn = self.start_service(LockdownService.TestmanagerdLockdown)
         return DTXService(conn)
 
+    # 2022-08-24 add retry delay, looks like sometime can recover
+    # BrokenPipeError(ConnectionError)
+    @retry((ssl.SSLError, socket.timeout, BrokenPipeError), delay=10, jitter=1, tries=3, logger=logging)
     def connect_instruments(self) -> ServiceInstruments:
         """ start service for instruments """
         if self.major_version() >= 14:
@@ -798,15 +804,10 @@ class BaseDevice():
 
         return ServiceInstruments(conn)
     
-
-    @contextlib.contextmanager
+    @deprecated(details="use connect_instruments instead")
     def instruments_context(self) -> typing.Generator[ServiceInstruments, None, None]:
-        ts = self.connect_instruments()
-        try:
-            yield ts
-        finally:
-            ts.close()
-
+        return self.connect_instruments()
+        
     def _launch_app_runner(self,
                     bundle_id: str,
                     session_identifier: uuid.UUID,
