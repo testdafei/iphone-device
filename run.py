@@ -127,23 +127,26 @@ def parse_data_from_config():
 
     return config_dic
 
-config_dic = parse_data_from_config()
-t = tidevice.Device(udid=config_dic['udid'])
-perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, tidevice.DataType.MEMORY,
-                                ])
 
-perf.start(config_dic['package'][0], callback=callback)
-cpu_title_writer()
-fps_title_writer()
-memory_title_writer()
-# 运行时间:秒
-time.sleep(config_dic['timeout'])
-# time.sleep(60)
-perf.stop()
-packages = config_dic['package']
-if config_dic["save_path"]:
-    package_save_path = os.path.join(config_dic["save_path"], packages[0], strDate)
-else:
-    package_save_path = time_file
-report = Report(package_save_path, packages)
-report.filter_file_names(package_save_path)
+if __name__ == '__main__':
+
+    config_dic = parse_data_from_config()
+    t = tidevice.Device(udid=config_dic['udid'])
+    perf = tidevice.Performance(t, [tidevice.DataType.CPU, tidevice.DataType.FPS, tidevice.DataType.MEMORY,
+                                    ])
+
+    perf.start(config_dic['package'][0], callback=callback)
+    cpu_title_writer()
+    fps_title_writer()
+    memory_title_writer()
+    # 运行时间:秒
+    time.sleep(config_dic['timeout'])
+    # time.sleep(60)
+    perf.stop()
+    packages = config_dic['package']
+    if config_dic["save_path"]:
+        package_save_path = os.path.join(config_dic["save_path"], packages[0], strDate)
+    else:
+        package_save_path = time_file
+    report = Report(package_save_path, packages)
+    report.filter_file_names(package_save_path)
